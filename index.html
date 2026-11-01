@@ -6,49 +6,50 @@
 <title>نظام إدارة جولات التعلم - Firebase</title>
 <style>
 :root {
---primary: #1e293b;
---secondary: #3b82f6;
---bg: #f8fafc;
---card-bg: #ffffff;
---border: #e2e8f0;
---success: #10b981;
---danger: #ef4444;
---warning: #f59e0b;
+    --primary: #1e293b;
+    --secondary: #3b82f6;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
 }
 * { box-sizing: border-box; }
 body {
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-background-color: var(--bg);
-color: var(--primary);
-margin: 0;
-padding: 15px;
-line-height: 1.6;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg);
+    color: var(--primary);
+    margin: 0;
+    padding: 15px;
+    line-height: 1.6;
 }
 .container { max-width: 1100px; margin: 0 auto; }
 /* Tabs */
 .tabs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 @media (min-width: 600px) { .tabs { flex-direction: row; } }
 .tab-btn {
-padding: 12px 20px; background: #fff; border: 1px solid var(--border);
-border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s;
-text-align: right;
+    padding: 12px 20px; background: #fff; border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s;
+    text-align: right;
 }
 .tab-btn.active { background: var(--secondary); color: white; border-color: var(--secondary); }
 .tab-content { display: none; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 .tab-content.active { display: block; }
 /* Status Badge */
 .status-badge {
-display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-bottom: 15px;
+    display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-bottom: 15px;
 }
 .status-online { background: #d1fae5; color: #065f46; }
 .status-loading { background: #fef3c7; color: #92400e; }
+.status-error { background: #fee2e2; color: #991b1b; }
 /* Forms & Inputs */
 .form-group { margin-bottom: 15px; }
 .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
 select, input[type="text"], textarea {
-width: 100%; padding: 12px; border: 1px solid var(--border);
-border-radius: 8px; font-family: inherit; font-size: 16px;
-background-color: #fff; color: #000;
+    width: 100%; padding: 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-family: inherit; font-size: 16px;
+    background-color: #fff; color: #000;
 }
 select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary); border-color: transparent; }
 .grid-4 { display: grid; grid-template-columns: 1fr; gap: 15px; }
@@ -83,410 +84,536 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
 .flex-between { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
 @media (min-width: 600px) { .flex-between { flex-direction: row; align-items: center; } }
 @media print {
-body { background: #fff; padding: 0; }
-.tabs, .no-print, .btn, .status-badge { display: none !important; }
-.tab-content { display: block !important; box-shadow: none; padding: 0; }
-#tab-control, #tab-visit { display: none !important; }
-#print-area { display: block !important; }
+    body { background: #fff; padding: 0; }
+    .tabs, .no-print, .btn, .status-badge { display: none !important; }
+    .tab-content { display: block !important; box-shadow: none; padding: 0; }
+    #tab-control, #tab-visit { display: none !important; }
+    #print-area { display: block !important; }
 }
 </style>
 </head>
 <body>
 <div class="container">
-<div id="connectionStatus" class="status-badge status-loading">🔄 جاري الاتصال بالخادم السحابي...</div>
-<!-- التبويبات -->
-<div class="tabs no-print">
-<button class="tab-btn active" onclick="switchTab('visit', this)">📝 تسجيل زيارة</button>
-<button class="tab-btn" onclick="switchTab('control', this)">⚙️ لوحة التحكم (البيانات والأسئلة)</button>
-<button class="tab-btn" onclick="switchTab('reports', this)">📊 التقارير</button>
+    <div id="connectionStatus" class="status-badge status-loading">🔄 جاري الاتصال بالخادم السحابي...</div>
+
+    <!-- التبويبات -->
+    <div class="tabs no-print">
+        <button class="tab-btn active" onclick="switchTab('visit', this)">📝 تسجيل زيارة</button>
+        <button class="tab-btn" onclick="switchTab('control', this)">⚙️ لوحة التحكم</button>
+        <button class="tab-btn" onclick="switchTab('reports', this)">📊 التقارير</button>
+    </div>
+
+    <!-- 1. تبويب تسجيل زيارة -->
+    <div id="tab-visit" class="tab-content active">
+        <h2 style="margin-top:0; text-align:center;">تسجيل زيارة جديدة</h2>
+        <div class="grid-4 no-print">
+            <div class="form-group">
+                <label>الزائر:</label>
+                <select id="visitorSelect"></select>
+            </div>
+            <div class="form-group">
+                <label>المعلم:</label>
+                <select id="teacherSelect"></select>
+            </div>
+            <div class="form-group">
+                <label>الصف:</label>
+                <select id="classSelect"></select>
+            </div>
+            <div class="form-group">
+                <label>نقطة التركيز:</label>
+                <select id="focusSelect" onchange="loadQuestionsForVisit()"></select>
+            </div>
+        </div>
+        <form id="visitForm">
+            <div id="questionsContainer"></div>
+            <button type="button" class="btn btn-primary btn-block no-print" onclick="saveVisit()">حفظ الزيارة وإصدار التقرير</button>
+        </form>
+        <div id="print-area" style="display: none; margin-top: 30px;">
+            <h2 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">تقرير زيارة صفية</h2>
+            <div id="visitPrintContent"></div>
+            <div class="no-print" style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-success" onclick="window.print()">🖨️ طباعة</button>
+                <button class="btn btn-warning" onclick="resetVisitForm()">زيارة جديدة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. تبويب لوحة التحكم -->
+    <div id="tab-control" class="tab-content">
+        <h2 style="margin-top:0;">لوحة التحكم والإعدادات</h2>
+        <div class="panel">
+            <h3>إدارة البيانات الأساسية (القوائم المنسدلة)</h3>
+            <div class="grid-3">
+                <div>
+                    <label>الزوار</label>
+                    <textarea id="visitorsList" rows="5"></textarea>
+                    <button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('visitors')">تحديث الزوار</button>
+                </div>
+                <div>
+                    <label>المعلمون</label>
+                    <textarea id="teachersList" rows="5"></textarea>
+                    <button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('teachers')">تحديث المعلمين</button>
+                </div>
+                <div>
+                    <label>الصفوف والشعب</label>
+                    <textarea id="classesList" rows="5"></textarea>
+                    <button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('classes')">تحديث الصفوف</button>
+                </div>
+            </div>
+            <small style="color:#64748b; display:block; margin-top:10px;">افصل بين كل عنصر وآخر بسطر جديد.</small>
+        </div>
+        <div class="panel">
+            <h3>إدارة نقاط التركيز والأسئلة</h3>
+            <div class="flex-between">
+                <div style="flex:1; width:100%;">
+                    <label>اختر نقطة التركيز لتعديل أسئلتها:</label>
+                    <select id="controlFocusSelect" onchange="loadControlQuestions()"></select>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn btn-success" onclick="addNewFocusPoint()">+ نقطة تركيز جديدة</button>
+                    <button class="btn btn-danger" onclick="deleteCurrentFocusPoint()">حذف النقطة</button>
+                </div>
+            </div>
+            <div id="controlQuestionsContainer" style="margin-top:20px;"></div>
+            <button class="btn btn-primary mt-3" style="width:100%; margin-top:15px;" onclick="addNewQuestionToFocus()">+ إضافة سؤال جديد</button>
+            <button class="btn btn-success mt-3" style="width:100%; margin-top:10px;" onclick="saveControlSettings()">💾 حفظ جميع التعديلات سحابياً</button>
+        </div>
+    </div>
+
+    <!-- 3. تبويب التقارير -->
+    <div id="tab-reports" class="tab-content">
+        <h2 style="margin-top:0;">التقارير التجميعية السحابية</h2>
+        <div class="grid-4 mb-3">
+            <button class="btn btn-primary" onclick="generateReport('visitor')">تجميعي حسب الزائر</button>
+            <button class="btn btn-primary" onclick="generateReport('teacher')">تجميعي حسب المعلم</button>
+            <button class="btn btn-primary" onclick="generateReport('focus')">تجميعي حسب النقطة</button>
+            <button class="btn btn-success" onclick="generateReport('all')">تقرير شامل</button>
+        </div>
+        <div id="reportOutput" style="margin-top:20px;"></div>
+    </div>
 </div>
-<!-- 1. تبويب تسجيل زيارة -->
-<div id="tab-visit" class="tab-content active">
-<h2 style="margin-top:0; text-align:center;">تسجيل زيارة جديدة</h2>
-<div class="grid-4 no-print">
-<div class="form-group">
-<label>الزائر:</label>
-<select id="visitorSelect"></select>
-</div>
-<div class="form-group">
-<label>المعلم:</label>
-<select id="teacherSelect"></select>
-</div>
-<div class="form-group">
-<label>الصف:</label>
-<select id="classSelect"></select>
-</div>
-<div class="form-group">
-<label>نقطة التركيز:</label>
-<select id="focusSelect" onchange="loadQuestionsForVisit()"></select>
-</div>
-</div>
-<form id="visitForm">
-<div id="questionsContainer"></div>
-<button type="button" class="btn btn-primary btn-block no-print" onclick="saveVisit()">حفظ الزيارة وإصدار التقرير</button>
-</form>
-<div id="print-area" style="display: none; margin-top: 30px;">
-<h2 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">تقرير زيارة صفية</h2>
-<div id="visitPrintContent"></div>
-<div class="no-print" style="text-align: center; margin-top: 20px;">
-<button class="btn btn-success" onclick="window.print()">🖨️ طباعة</button>
-<button class="btn btn-warning" onclick="resetVisitForm()">زيارة جديدة</button>
-</div>
-</div>
-</div>
-<!-- 2. تبويب لوحة التحكم -->
-<div id="tab-control" class="tab-content">
-<h2 style="margin-top:0;">لوحة التحكم والإعدادات</h2>
-<div class="panel">
-<h3>إدارة البيانات الأساسية (القوائم المنسدلة)</h3>
-<div class="grid-3">
-<div>
-<label>الزوار</label>
-<textarea id="visitorsList" rows="5"></textarea>
-<button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('visitors')">تحديث الزوار</button>
-</div>
-<div>
-<label>المعلمون</label>
-<textarea id="teachersList" rows="5"></textarea>
-<button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('teachers')">تحديث المعلمين</button>
-</div>
-<div>
-<label>الصفوف والشعب</label>
-<textarea id="classesList" rows="5"></textarea>
-<button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('classes')">تحديث الصفوف</button>
-</div>
-</div>
-<small style="color:#64748b; display:block; margin-top:10px;">افصل بين كل عنصر وآخر بسطر جديد.</small>
-</div>
-<div class="panel">
-<h3>إدارة نقاط التركيز والأسئلة</h3>
-<div class="flex-between">
-<div style="flex:1; width:100%;">
-<label>اختر نقطة التركيز لتعديل أسئلتها:</label>
-<select id="controlFocusSelect" onchange="loadControlQuestions()"></select>
-</div>
-<div style="display:flex; gap:10px; margin-top:10px;">
-<button class="btn btn-success" onclick="addNewFocusPoint()">+ نقطة تركيز جديدة</button>
-<button class="btn btn-danger" onclick="deleteCurrentFocusPoint()">حذف النقطة</button>
-</div>
-</div>
-<div id="controlQuestionsContainer" style="margin-top:20px;"></div>
-<button class="btn btn-primary mt-3" style="width:100%; margin-top:15px;" onclick="addNewQuestionToFocus()">+ إضافة سؤال جديد</button>
-<button class="btn btn-success mt-3" style="width:100%; margin-top:10px;" onclick="saveControlSettings()">💾 حفظ جميع التعديلات سحابياً</button>
-</div>
-</div>
-<!-- 3. تبويب التقارير -->
-<div id="tab-reports" class="tab-content">
-<h2 style="margin-top:0;">التقارير التجميعية السحابية</h2>
-<div class="grid-4 mb-3">
-<button class="btn btn-primary" onclick="generateReport('visitor')">تجميعي حسب الزائر</button>
-<button class="btn btn-primary" onclick="generateReport('teacher')">تجميعي حسب المعلم</button>
-<button class="btn btn-primary" onclick="generateReport('focus')">تجميعي حسب النقطة</button>
-<button class="btn btn-success" onclick="generateReport('all')">تقرير شامل</button>
-</div>
-<div id="reportOutput" style="margin-top:20px;"></div>
-</div>
-</div>
+
 <!-- مكتبات Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script>
 // ==========================================
-// 1. إعدادات Firebase الخاصة بالمشروع ahmed-d654f
+// 1. إعدادات Firebase (يجب استبدالها بإعداداتك الكاملة)
 // ==========================================
 const firebaseConfig = {
-projectId: "ahmed-d654f",
-authDomain: "ahmed-d654f.firebaseapp.com",
-storageBucket: "ahmed-d654f.appspot.com",
+    // ⚠️ تنبيه: يجب إضافة apiKey و appId من لوحة تحكم Firebase
+    projectId: "ahmed-d654f",
+    authDomain: "ahmed-d654f.firebaseapp.com",
+    storageBucket: "ahmed-d654f.appspot.com",
+    // apiKey: "ضع_المفتاح_هنا",
+    // messagingSenderId: "ضع_الرقم_هنا",
+    // appId: "ضع_المعرف_هنا"
 };
+
 let db;
 try {
-firebase.initializeApp(firebaseConfig);
-db = firebase.firestore();
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
 } catch (e) {
-console.error("Firebase Initialization Error:", e);
+    console.error("Firebase Initialization Error:", e);
+    document.getElementById('connectionStatus').innerText = "❌ إعدادات Firebase غير مكتملة";
+    document.getElementById('connectionStatus').className = "status-badge status-error";
 }
+
 const DEFAULT_DATA = {
-visitors: [
-"الدكتور حسن بن علي البلوشي (المدير)",
-"أحمد بن عبدالله العلي (المصمم)",
-"المشرف التربوي الأول",
-"المشرف التربوي الثاني"
-],
-teachers: [
-"عادل ناعم راشد الشيدى", "ماجد سعيد هلال الحوسنى", "بدر سيف خميس الغافرى", "فريد سيف حمد المقبالى",
-"ابراهيم مصبح كوهيه السعدى", "ناصر محمد على الغدانى", "محمد سالم على البلوشى", "هلال عامر هلال الجهورى",
-"عبدالعزيز راشد سعيد الغدانى", "عمرو احمد عامر عيد", "بدر سعيد محمد الرشيدى", "فوزى عبدالله سعيد الصالحى",
-"احمد محمد عبيد السعدى", "راشد علي سعيد الشحي", "عامر سليمان حميد السعيدى", "محمد عامر فاضل السعدى",
-"بدر بطى راشد القاسمى", "على سالم راشد الغسانى", "على حمد على الشيادى", "سعيد مبارك عبدالله البلوشى",
-"سمير خميس غابش الخميسى", "بدر زايد سيف الصالحى", "ناصر سعيد صالح المسعودي", "سلطان حميد راشد الغافرى",
-"شهاب احمد ابراهيم العلوى", "ناصر سيف سعيد المقبالى", "عدنان على محمد المرزوقى", "ماجد عبدالله محمد الجنيبى",
-"جاسم محمد حميد البلوشى", "سعيد محمد على الغدانى", "شريف فاضل ناصر الصالحى", "حمد صالح حمدان البلوشى",
-"ياسر صغير مبارك الرشيدى", "محمود سعيد على الشحى", "هشام صالح منجود صالح", "عبدالعزيز عبدالله سيف الجهورى",
-"موسى على سليمان الغافرى", "عبدالعزيز محمد صالح البلوشى", "معاذ محمد سالم الجهوري", "سالم محمد حمد المجيهلي",
-"محمد حمدان عبدالله القريني", "مخلد سالم هاشل سيف العوادي", "عبدالله حمود عبدالله الخميسي", "عمر علي هاشل السعدي",
-"سعد ضاحي بيدار السعدي", "عمار راشد صغير سعيد الصالحي", "سلطان سيف سالم الصالحى", "يحيى عبدالله سليمان السابعى",
-"ابراهيم عبدالله صالح القرنى", "ظاهر رامس حمود القعنونى", "عمر ناصر سالم المسعودى", "ماجد سعيد على الشحى",
-"وضاح راشد بريك الحوسنى", "طلال القادرى يونس عبدلى", "خالد سعيد على الشحى", "نبيل سالم سليمان المقبالي",
-"ابراهيم عبيد خلف المزروعي", "محمدشاكر بن بلقاسم عكروتي", "احمد حميد سيف هاشل المخمري", "محمد محمود احمد محمد",
-"احمد ناجي محمد عرفات", "عمرو عبدالعال محمد محمود", "حمد محمد خميس البادي", "سيف الدين بن يونس الحاجي",
-"ماجد عبدالله أحمد البلوشي", "حكيم بن مسعود اولاد دلالة", "صلاح زين الدين السيد الغتورى", "وائل بن محسن منوبي",
-"اميل منير صبحى سيدهم", "مروان محمد العادل بلعج"
-],
-classes: [
-"5/1", "5/2", "5/3", "5/4", "5/5", "5/6", "5/7",
-"6/1", "6/2", "6/3", "6/4", "6/5", "6/6",
-"7/1", "7/2", "7/3", "7/4", "7/5", "7/6", "7/7",
-"8/1", "8/2", "8/3", "8/4", "8/5", "8/6",
-"9/1", "9/2", "9/3", "9/4", "9/5", "9/6"
-],
-focusPoints: [
-{
-id: "f1",
-name: "مدى تطبيق المعلمين للتعلم التعاوني",
-questions: [
-{ id: "q1", text: "هل وزّع المعلم الطلاب إلى مجموعات صغيرة (من 3 إلى 5 طلاب) بشكل منظم؟", evidences: ["مجموعات ثنائية", "مجموعات ثلاثية", "مجموعات رباعية", "توزيع فوضوي", "لم يتم التوزيع"] },
-{ id: "q2", text: "هل راعى المعلم التنوع في مستويات الطلاب عند تشكيل المجموعات؟", evidences: ["مجموعات غير متجانسة", "مجموعات متجانسة", "لا يمكن ملاحظة ذلك"] },
-{ id: "q3", text: "هل شرح المعلم المهمة التعليمية والهدف المشترك بوضوح قبل بدء النشاط؟", evidences: ["شرح شفهي واضح", "تعليمات مكتوبة", "شرح مبهم", "لم يتم شرح المهمة"] },
-{ id: "q4", text: "هل تتطلب المهمة المطروحة تعاوناً فعلياً بين الطلاب لإنجازها؟", evidences: ["نعم تتطلب تعاون", "يمكن حلها فردياً", "مهمة غير واضحة"] },
-{ id: "q5", text: "هل تم توزيع أدوار محددة وواضحة لكل طالب داخل المجموعة؟", evidences: ["أدوار مكتوبة", "أدوار شفهية", "لم يتم توزيع أدوار"] },
-{ id: "q6", text: "هل يتبادل الطلاب النقاش والشرح ومساعدة بعضهم البعض داخل المجموعات؟", evidences: ["نقاش فعال", "تفاعل محدود", "صمت وتجاهل", "حديث جانبي"] },
-{ id: "q7", text: "هل يشارك جميع أعضاء المجموعة في التنفيذ أم يقتصر على طالب واحد؟", evidences: ["جميع الطلاب يشاركون", "طالب واحد يسيطر", "طلاب متفرجون"] },
-{ id: "q8", text: "هل يلتزم الطلاب بالمهارات الاجتماعية كالاستماع واحترام الأدوار؟", evidences: ["استماع واحترام", "مقاطعة متكررة", "مشادات"] },
-{ id: "q9", text: "هل ينتقل المعلم بين المجموعات للملاحظة والتوجيه؟", evidences: ["ينتقل بفعالية", "يتدخل عند الحاجة", "يجلس على مكتبه"] },
-{ id: "q10", text: "هل قيّم المعلم عمل المجموعة ككل وقدّم تغذية راجعة؟", evidences: ["تقييم جماعي", "تقييم فردي فقط", "لم يتم التقييم"] }
-]
-}
-],
-visits: []
+    visitors: [
+        "الدكتور حسن بن علي البلوشي (المدير)",
+        "أحمد بن عبدالله العلي (المصمم)",
+        "المشرف التربوي الأول",
+        "المشرف التربوي الثاني"
+    ],
+    teachers: [
+        "عادل ناعم راشد الشيدى", "ماجد سعيد هلال الحوسنى", "بدر سيف خميس الغافرى", "فريد سيف حمد المقبالى",
+        "ابراهيم مصبح كوهيه السعدى", "ناصر محمد على الغدانى", "محمد سالم على البلوشى", "هلال عامر هلال الجهورى",
+        "عبدالعزيز راشد سعيد الغدانى", "عمرو احمد عامر عيد", "بدر سعيد محمد الرشيدى", "فوزى عبدالله سعيد الصالحى",
+        "احمد محمد عبيد السعدى", "راشد علي سعيد الشحي", "عامر سليمان حميد السعيدى", "محمد عامر فاضل السعدى",
+        "بدر بطى راشد القاسمى", "على سالم راشد الغسانى", "على حمد على الشيادى", "سعيد مبارك عبدالله البلوشى",
+        "سمير خميس غابش الخميسى", "بدر زايد سيف الصالحى", "ناصر سعيد صالح المسعودي", "سلطان حميد راشد الغافرى",
+        "شهاب احمد ابراهيم العلوى", "ناصر سيف سعيد المقبالى", "عدنان على محمد المرزوقى", "ماجد عبدالله محمد الجنيبى",
+        "جاسم محمد حميد البلوشى", "سعيد محمد على الغدانى", "شريف فاضل ناصر الصالحى", "حمد صالح حمدان البلوشى",
+        "ياسر صغير مبارك الرشيدى", "محمود سعيد على الشحى", "هشام صالح منجود صالح", "عبدالعزيز عبدالله سيف الجهورى",
+        "موسى على سليمان الغافرى", "عبدالعزيز محمد صالح البلوشى", "معاذ محمد سالم الجهوري", "سالم محمد حمد المجيهلي",
+        "محمد حمدان عبدالله القريني", "مخلد سالم هاشل سيف العوادي", "عبدالله حمود عبدالله الخميسي", "عمر علي هاشل السعدي",
+        "سعد ضاحي بيدار السعدي", "عمار راشد صغير سعيد الصالحي", "سلطان سيف سالم الصالحى", "يحيى عبدالله سليمان السابعى",
+        "ابراهيم عبدالله صالح القرنى", "ظاهر رامس حمود القعنونى", "عمر ناصر سالم المسعودى", "ماجد سعيد على الشحى",
+        "وضاح راشد بريك الحوسنى", "طلال القادرى يونس عبدلى", "خالد سعيد على الشحى", "نبيل سالم سليمان المقبالي",
+        "ابراهيم عبيد خلف المزروعي", "محمدشاكر بن بلقاسم عكروتي", "احمد حميد سيف هاشل المخمري", "محمد محمود احمد محمد",
+        "احمد ناجي محمد عرفات", "عمرو عبدالعال محمد محمود", "حمد محمد خميس البادي", "سيف الدين بن يونس الحاجي",
+        "ماجد عبدالله أحمد البلوشي", "حكيم بن مسعود اولاد دلالة", "صلاح زين الدين السيد الغتورى", "وائل بن محسن منوبي",
+        "اميل منير صبحى سيدهم", "مروان محمد العادل بلعج"
+    ],
+    classes: [
+        "5/1", "5/2", "5/3", "5/4", "5/5", "5/6", "5/7",
+        "6/1", "6/2", "6/3", "6/4", "6/5", "6/6",
+        "7/1", "7/2", "7/3", "7/4", "7/5", "7/6", "7/7",
+        "8/1", "8/2", "8/3", "8/4", "8/5", "8/6",
+        "9/1", "9/2", "9/3", "9/4", "9/5", "9/6"
+    ],
+    focusPoints: [
+        {
+            id: "f1",
+            name: "مدى تطبيق المعلمين للتعلم التعاوني",
+            questions: [
+                { id: "q1", text: "هل وزّع المعلم الطلاب إلى مجموعات صغيرة (من 3 إلى 5 طلاب) بشكل منظم؟", evidences: ["مجموعات ثنائية", "مجموعات ثلاثية", "مجموعات رباعية", "توزيع فوضوي", "لم يتم التوزيع"] },
+                { id: "q2", text: "هل راعى المعلم التنوع في مستويات الطلاب عند تشكيل المجموعات؟", evidences: ["مجموعات غير متجانسة", "مجموعات متجانسة", "لا يمكن ملاحظة ذلك"] },
+                { id: "q3", text: "هل شرح المعلم المهمة التعليمية والهدف المشترك بوضوح قبل بدء النشاط؟", evidences: ["شرح شفهي واضح", "تعليمات مكتوبة", "شرح مبهم", "لم يتم شرح المهمة"] },
+                { id: "q4", text: "هل تتطلب المهمة المطروحة تعاوناً فعلياً بين الطلاب لإنجازها؟", evidences: ["نعم تتطلب تعاون", "يمكن حلها فردياً", "مهمة غير واضحة"] },
+                { id: "q5", text: "هل تم توزيع أدوار محددة وواضحة لكل طالب داخل المجموعة؟", evidences: ["أدوار مكتوبة", "أدوار شفهية", "لم يتم توزيع أدوار"] },
+                { id: "q6", text: "هل يتبادل الطلاب النقاش والشرح ومساعدة بعضهم البعض داخل المجموعات؟", evidences: ["نقاش فعال", "تفاعل محدود", "صمت وتجاهل", "حديث جانبي"] },
+                { id: "q7", text: "هل يشارك جميع أعضاء المجموعة في التنفيذ أم يقتصر على طالب واحد؟", evidences: ["جميع الطلاب يشاركون", "طالب واحد يسيطر", "طلاب متفرجون"] },
+                { id: "q8", text: "هل يلتزم الطلاب بالمهارات الاجتماعية كالاستماع واحترام الأدوار؟", evidences: ["استماع واحترام", "مقاطعة متكررة", "مشادات"] },
+                { id: "q9", text: "هل ينتقل المعلم بين المجموعات للملاحظة والتوجيه؟", evidences: ["ينتقل بفعالية", "يتدخل عند الحاجة", "يجلس على مكتبه"] },
+                { id: "q10", text: "هل قيّم المعلم عمل المجموعة ككل وقدّم تغذية راجعة؟", evidences: ["تقييم جماعي", "تقييم فردي فقط", "لم يتم التقييم"] }
+            ]
+        }
+    ],
+    visits: []
 };
+
 let DB = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
 // ==========================================
-// 2. المزامنة السحابية اللحظية (Real-time Sync)
+// 2. المزامنة السحابية اللحظية
 // ==========================================
 function syncCloudData() {
-if (!db) {
-updateStatus("⚠️ تعذر الاتصال بـ Firebase", false);
-return;
+    if (!db) {
+        updateStatus("⚠️ تعذر الاتصال بـ Firebase", false);
+        return;
+    }
+    db.collection("app_data").doc("main").onSnapshot((doc) => {
+        if (doc.exists) {
+            DB = doc.data();
+            if (!DB.visits) DB.visits = [];
+            updateStatus("🟢 متصل بالسحابة (مُزامن بنجاح)", true);
+        } else {
+            db.collection("app_data").doc("main").set(DEFAULT_DATA).then(() => {
+                DB = DEFAULT_DATA;
+                updateStatus("🟢 تم إنشاء قاعدة البيانات السحابية", true);
+            });
+        }
+        populateSelects();
+        loadControlPanel();
+    }, (error) => {
+        console.error("Firestore error:", error);
+        updateStatus("❌ خطأ في الاتصال، يرجى الترفيع والتأكد من إعداد القواعد", false);
+    });
 }
-db.collection("app_data").doc("main").onSnapshot((doc) => {
-if (doc.exists) {
-DB = doc.data();
-if (!DB.visits) DB.visits = [];
-updateStatus("🟢 متصل بالسحابة (مُزامن بنجاح)", true);
-} else {
-db.collection("app_data").doc("main").set(DEFAULT_DATA).then(() => {
-DB = DEFAULT_DATA;
-updateStatus("🟢 تم إنشاء قاعدة البيانات السحابية", true);
-});
-}
-populateSelects();
-loadControlPanel();
-}, (error) => {
-console.error("Firestore error:", error);
-updateStatus("❌ خطأ في الاتصال، يرجى الترفيع والتأكد من إعداد القواعد", false);
-});
-}
+
 function saveToCloud() {
-if (!db) return;
-updateStatus("⏳ جاري حفظ التعديلات سحابياً...", false);
-db.collection("app_data").doc("main").set(DB).then(() => {
-updateStatus("🟢 تم الحفظ سحابياً بنجاح", true);
-}).catch((err) => {
-alert("حدث خطأ أثناء الحفظ سحابياً: " + err.message);
-});
+    if (!db) return;
+    updateStatus("⏳ جاري حفظ التعديلات سحابياً...", false);
+    db.collection("app_data").doc("main").set(DB).then(() => {
+        updateStatus("🟢 تم الحفظ سحابياً بنجاح", true);
+    }).catch((err) => {
+        alert("حدث خطأ أثناء الحفظ سحابياً: " + err.message);
+    });
 }
+
 function updateStatus(text, isSuccess) {
-const badge = document.getElementById('connectionStatus');
-badge.innerText = text;
-badge.className = "status-badge " + (isSuccess ? "status-online" : "status-loading");
+    const badge = document.getElementById('connectionStatus');
+    badge.innerText = text;
+    badge.className = "status-badge " + (isSuccess ? "status-online" : "status-loading");
 }
+
 // ==========================================
 // 3. إدارة التبويبات والواجهة
 // ==========================================
 function switchTab(tabId, btnElement) {
-document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-document.getElementById('tab-' + tabId).classList.add('active');
-if(btnElement) btnElement.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    if(btnElement) btnElement.classList.add('active');
 }
+
 function populateSelects() {
-if (!DB || !DB.visitors) return;
-document.getElementById('visitorSelect').innerHTML = DB.visitors.map(v => ⁠<option value="${v}">${v}</option>⁠).join('');
-document.getElementById('teacherSelect').innerHTML = DB.teachers.map(t => ⁠<option value="${t}">${t}</option>⁠).join('');
-document.getElementById('classSelect').innerHTML = DB.classes.map(c => ⁠<option value="${c}">${c}</option>⁠).join('');
-const focusOptions = DB.focusPoints.map(f => ⁠<option value="${f.id}">${f.name}</option>⁠).join('');
-document.getElementById('focusSelect').innerHTML = focusOptions;
-document.getElementById('controlFocusSelect').innerHTML = focusOptions;
-loadQuestionsForVisit();
+    if (!DB || !DB.visitors) return;
+    document.getElementById('visitorSelect').innerHTML = DB.visitors.map(v => `<option value="${v}">${v}</option>`).join('');
+    document.getElementById('teacherSelect').innerHTML = DB.teachers.map(t => `<option value="${t}">${t}</option>`).join('');
+    document.getElementById('classSelect').innerHTML = DB.classes.map(c => `<option value="${c}">${c}</option>`).join('');
+    
+    const focusOptions = DB.focusPoints.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+    document.getElementById('focusSelect').innerHTML = focusOptions;
+    document.getElementById('controlFocusSelect').innerHTML = focusOptions;
+    
+    loadQuestionsForVisit();
 }
+
 function loadQuestionsForVisit() {
-const focusId = document.getElementById('focusSelect').value;
-const focusObj = DB.focusPoints.find(f => f.id === focusId);
-const container = document.getElementById('questionsContainer');
-if (!focusObj) { container.innerHTML = "<p>لا توجد أسئلة لهذه النقطة.</p>"; return; }
-container.innerHTML = focusObj.questions.map((q, index) => ⁠<div class="question-card"> <div class="question-text">${index + 1}. ${q.text}</div> <div class="options-group"> <label class="radio-label"><input type="radio" name="ans_${q.id}" value="نعم" required> نعم</label> <label class="radio-label"><input type="radio" name="ans_${q.id}" value="لا" required> لا</label> </div> <select id="ev_${q.id}" required> <option value="" disabled selected>-- اختر الدليل --</option> ${q.evidences.map(e =>⁠<option value="${e}">${e}</option>⁠).join('')} </select> </div> ⁠).join('');
+    const focusId = document.getElementById('focusSelect').value;
+    const focusObj = DB.focusPoints.find(f => f.id === focusId);
+    const container = document.getElementById('questionsContainer');
+    
+    if (!focusObj) { container.innerHTML = "<p>لا توجد أسئلة لهذه النقطة.</p>"; return; }
+    
+    container.innerHTML = focusObj.questions.map((q, index) => `
+        <div class="question-card">
+            <div class="question-text">${index + 1}. ${q.text}</div>
+            <div class="options-group">
+                <label class="radio-label"><input type="radio" name="ans_${q.id}" value="نعم" required> نعم</label>
+                <label class="radio-label"><input type="radio" name="ans_${q.id}" value="لا" required> لا</label>
+            </div>
+            <select id="ev_${q.id}" required>
+                <option value="" disabled selected>-- اختر الدليل --</option>
+                ${q.evidences.map(e => `<option value="${e}">${e}</option>`).join('')}
+            </select>
+        </div>
+    `).join('');
 }
+
 function saveVisit() {
-const form = document.getElementById('visitForm');
-if (!form.checkValidity()) { alert("الرجاء الإجابة على جميع الأسئلة واختيار الأدلة."); return; }
-const focusId = document.getElementById('focusSelect').value;
-const focusObj = DB.focusPoints.find(f => f.id === focusId);
-const answers = focusObj.questions.map(q => {
-const ans = document.querySelector(⁠input[name="ans_${q.id}"]:checked⁠).value;
-const evidence = document.getElementById(⁠ev_${q.id}⁠).value;
-return { qText: q.text, answer: ans, evidence: evidence };
-});
-const yesCount = answers.filter(a => a.answer === 'نعم').length;
-const visit = {
-id: Date.now(),
-date: new Date().toLocaleString('ar-EG'),
-visitor: document.getElementById('visitorSelect').value,
-teacher: document.getElementById('teacherSelect').value,
-className: document.getElementById('classSelect').value,
-focusName: focusObj.name,
-answers: answers,
-yesCount: yesCount,
-totalQ: focusObj.questions.length
-};
-DB.visits.push(visit);
-saveToCloud();
-showVisitReport(visit);
+    const form = document.getElementById('visitForm');
+    if (!form.checkValidity()) { alert("الرجاء الإجابة على جميع الأسئلة واختيار الأدلة."); return; }
+    
+    const focusId = document.getElementById('focusSelect').value;
+    const focusObj = DB.focusPoints.find(f => f.id === focusId);
+    
+    const answers = focusObj.questions.map(q => {
+        const ans = document.querySelector(`input[name="ans_${q.id}"]:checked`).value;
+        const evidence = document.getElementById(`ev_${q.id}`).value;
+        return { qText: q.text, answer: ans, evidence: evidence };
+    });
+    
+    const yesCount = answers.filter(a => a.answer === 'نعم').length;
+    
+    const visit = {
+        id: Date.now(),
+        date: new Date().toLocaleString('ar-EG'),
+        visitor: document.getElementById('visitorSelect').value,
+        teacher: document.getElementById('teacherSelect').value,
+        className: document.getElementById('classSelect').value,
+        focusName: focusObj.name,
+        answers: answers,
+        yesCount: yesCount,
+        totalQ: focusObj.questions.length
+    };
+    
+    DB.visits.push(visit);
+    saveToCloud();
+    showVisitReport(visit);
 }
+
 function showVisitReport(visit) {
-document.getElementById('visitForm').style.display = 'none';
-document.querySelector('.grid-4').style.display = 'none';
-document.getElementById('print-area').style.display = 'block';
-let html = ⁠<div class="summary-box"> <strong>الزائر:</strong> ${visit.visitor} <br> <strong>المعلم:</strong> ${visit.teacher} <br> <strong>الصف:</strong> ${visit.className} <br> <span style="font-size:0.9em; font-weight:normal;">التاريخ: ${visit.date} <br> نقطة التركيز: ${visit.focusName}</span> <hr style="margin:10px 0; border:0; border-top:1px solid #ccc;"> النتيجة: ${visit.yesCount} من ${visit.totalQ} (${Math.round((visit.yesCount/visit.totalQ)*100)}%) </div>⁠;
-visit.answers.forEach((a, i) => {
-html += ⁠<div class="report-card"> <div style="font-weight:bold; margin-bottom:5px;">${i+1}. ${a.qText}</div> <div>الإجابة: <span class="${a.answer === 'نعم' ? 'ans-yes' : 'ans-no'}">${a.answer}</span></div> <div style="font-size:0.9em; color:#555;"><strong>الدليل:</strong> ${a.evidence}</div> </div>⁠;
-});
-document.getElementById('visitPrintContent').innerHTML = html;
+    document.getElementById('visitForm').style.display = 'none';
+    document.querySelector('.grid-4').style.display = 'none';
+    document.getElementById('print-area').style.display = 'block';
+    
+    let html = `
+        <div class="summary-box">
+            <strong>الزائر:</strong> ${visit.visitor} <br>
+            <strong>المعلم:</strong> ${visit.teacher} <br>
+            <strong>الصف:</strong> ${visit.className} <br>
+            <span style="font-size:0.9em; font-weight:normal;">التاريخ: ${visit.date} <br> نقطة التركيز: ${visit.focusName}</span>
+            <hr style="margin:10px 0; border:0; border-top:1px solid #ccc;">
+            النتيجة: ${visit.yesCount} من ${visit.totalQ} (${Math.round((visit.yesCount/visit.totalQ)*100)}%)
+        </div>
+    `;
+    
+    visit.answers.forEach((a, i) => {
+        html += `
+            <div class="report-card">
+                <div style="font-weight:bold; margin-bottom:5px;">${i+1}. ${a.qText}</div>
+                <div>الإجابة: <span class="${a.answer === 'نعم' ? 'ans-yes' : 'ans-no'}">${a.answer}</span></div>
+                <div style="font-size:0.9em; color:#555;"><strong>الدليل:</strong> ${a.evidence}</div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('visitPrintContent').innerHTML = html;
 }
+
 function resetVisitForm() {
-document.getElementById('visitForm').reset();
-document.getElementById('visitForm').style.display = 'block';
-document.querySelector('.grid-4').style.display = 'grid';
-document.getElementById('print-area').style.display = 'none';
-window.scrollTo(0, 0);
+    document.getElementById('visitForm').reset();
+    document.getElementById('visitForm').style.display = 'block';
+    document.querySelector('.grid-4').style.display = 'grid';
+    document.getElementById('print-area').style.display = 'none';
+    window.scrollTo(0, 0);
 }
+
 // ==========================================
 // 4. لوحة التحكم والتقارير
 // ==========================================
 function loadControlPanel() {
-if(!DB) return;
-document.getElementById('visitorsList').value = (DB.visitors || []).join('\n');
-document.getElementById('teachersList').value = (DB.teachers || []).join('\n');
-document.getElementById('classesList').value = (DB.classes || []).join('\n');
-loadControlQuestions();
+    if(!DB) return;
+    document.getElementById('visitorsList').value = (DB.visitors || []).join('\n');
+    document.getElementById('teachersList').value = (DB.teachers || []).join('\n');
+    document.getElementById('classesList').value = (DB.classes || []).join('\n');
+    loadControlQuestions();
 }
+
 function saveLists(type) {
-const val = document.getElementById(type + 'List').value;
-DB[type] = val.split('\n').map(s => s.trim()).filter(s => s !== '');
-saveToCloud();
+    const val = document.getElementById(type + 'List').value;
+    DB[type] = val.split('\n').map(s => s.trim()).filter(s => s !== '');
+    saveToCloud();
 }
+
 function loadControlQuestions() {
-const focusId = document.getElementById('controlFocusSelect').value;
-const focusObj = (DB.focusPoints || []).find(f => f.id === focusId);
-const container = document.getElementById('controlQuestionsContainer');
-if (!focusObj) { container.innerHTML = "<p>لا توجد أسئلة لتعريفها.</p>"; return; }
-container.innerHTML = focusObj.questions.map((q, index) => ⁠<div class="panel" style="background:#f8fafc; position:relative; padding-top:40px;"> <button class="btn btn-danger btn-sm" style="position:absolute; top:10px; left:10px;" onclick="deleteControlQuestion('${q.id}')">حذف السؤال</button> <div class="form-group"> <label>نص السؤال ${index + 1}:</label> <input type="text" id="ctrl_q_${q.id}" value="${q.text}"> </div> <div class="form-group"> <label>الأدلة (افصل بينها بفاصلة):</label> <input type="text" id="ctrl_e_${q.id}" value="${q.evidences.join(', ')}"> </div> </div>⁠).join('');
+    const focusId = document.getElementById('controlFocusSelect').value;
+    const focusObj = (DB.focusPoints || []).find(f => f.id === focusId);
+    const container = document.getElementById('controlQuestionsContainer');
+    
+    if (!focusObj) { container.innerHTML = "<p>لا توجد أسئلة لتعريفها.</p>"; return; }
+    
+    container.innerHTML = focusObj.questions.map((q, index) => `
+        <div class="panel" style="background:#f8fafc; position:relative; padding-top:40px;">
+            <button class="btn btn-danger btn-sm" style="position:absolute; top:10px; left:10px;" onclick="deleteControlQuestion('${q.id}')">حذف السؤال</button>
+            <div class="form-group">
+                <label>نص السؤال ${index + 1}:</label>
+                <input type="text" id="ctrl_q_${q.id}" value="${q.text}">
+            </div>
+            <div class="form-group">
+                <label>الأدلة (افصل بينها بفاصلة):</label>
+                <input type="text" id="ctrl_e_${q.id}" value="${q.evidences.join(', ')}">
+            </div>
+        </div>
+    `).join('');
 }
+
 function saveControlSettings() {
-const focusId = document.getElementById('controlFocusSelect').value;
-const focusObj = DB.focusPoints.find(f => f.id === focusId);
-if(!focusObj) return;
-focusObj.questions.forEach(q => {
-const textInput = document.getElementById(⁠ctrl_q_${q.id}⁠);
-const evInput = document.getElementById(⁠ctrl_e_${q.id}⁠);
-if(textInput && evInput) {
-q.text = textInput.value;
-q.evidences = evInput.value.split(',').map(s => s.trim()).filter(s => s);
+    const focusId = document.getElementById('controlFocusSelect').value;
+    const focusObj = DB.focusPoints.find(f => f.id === focusId);
+    if(!focusObj) return;
+    
+    focusObj.questions.forEach(q => {
+        const textInput = document.getElementById(`ctrl_q_${q.id}`);
+        const evInput = document.getElementById(`ctrl_e_${q.id}`);
+        if(textInput && evInput) {
+            q.text = textInput.value;
+            q.evidences = evInput.value.split(',').map(s => s.trim()).filter(s => s);
+        }
+    });
+    
+    saveToCloud();
 }
-});
-saveToCloud();
-}
+
 function addNewFocusPoint() {
-const name = prompt("أدخل اسم نقطة التركيز الجديدة:");
-if(!name) return;
-const newId = 'f' + Date.now();
-DB.focusPoints.push({ id: newId, name: name, questions: [] });
-saveToCloud();
+    const name = prompt("أدخل اسم نقطة التركيز الجديدة:");
+    if(!name) return;
+    const newId = 'f' + Date.now();
+    DB.focusPoints.push({ id: newId, name: name, questions: [] });
+    saveToCloud();
 }
+
 function deleteCurrentFocusPoint() {
-if(!confirm('هل أنت متأكد من حذف نقطة التركيز هذه وكافة أسئلتها؟')) return;
-const focusId = document.getElementById('controlFocusSelect').value;
-DB.focusPoints = DB.focusPoints.filter(f => f.id !== focusId);
-saveToCloud();
+    if(!confirm('هل أنت متأكد من حذف نقطة التركيز هذه وكافة أسئلتها؟')) return;
+    const focusId = document.getElementById('controlFocusSelect').value;
+    DB.focusPoints = DB.focusPoints.filter(f => f.id !== focusId);
+    saveToCloud();
 }
+
 function addNewQuestionToFocus() {
-const focusId = document.getElementById('controlFocusSelect').value;
-const focusObj = DB.focusPoints.find(f => f.id === focusId);
-if(!focusObj) return;
-const newId = 'q' + Date.now();
-focusObj.questions.push({ id: newId, text: "سؤال جديد (عدله ثم احفظ)", evidences: ["دليل 1", "دليل 2"] });
-saveToCloud();
+    const focusId = document.getElementById('controlFocusSelect').value;
+    const focusObj = DB.focusPoints.find(f => f.id === focusId);
+    if(!focusObj) return;
+    
+    const newId = 'q' + Date.now();
+    focusObj.questions.push({ id: newId, text: "سؤال جديد (عدله ثم احفظ)", evidences: ["دليل 1", "دليل 2"] });
+    saveToCloud();
 }
+
 function deleteControlQuestion(qId) {
-if(!confirm('حذف هذا السؤال؟')) return;
-const focusId = document.getElementById('controlFocusSelect').value;
-const focusObj = DB.focusPoints.find(f => f.id === focusId);
-focusObj.questions = focusObj.questions.filter(q => q.id !== qId);
-saveToCloud();
+    if(!confirm('حذف هذا السؤال؟')) return;
+    const focusId = document.getElementById('controlFocusSelect').value;
+    const focusObj = DB.focusPoints.find(f => f.id === focusId);
+    focusObj.questions = focusObj.questions.filter(q => q.id !== qId);
+    saveToCloud();
 }
+
 function generateReport(type) {
-const output = document.getElementById('reportOutput');
-if(!DB.visits || DB.visits.length === 0) { output.innerHTML = "<p>لا توجد زيارات مسجلة سحابياً حتى الآن.</p>"; return; }
-let html = '';
-if (type === 'visitor') {
-html += ⁠<h3>التقرير التجميعي حسب الزائر</h3>⁠;
-const visitors = [...new Set(DB.visits.map(v => v.visitor))];
-visitors.forEach(v => {
-const vVisits = DB.visits.filter(x => x.visitor === v);
-const totalYes = vVisits.reduce((sum, x) => sum + x.yesCount, 0);
-const maxYes = vVisits.reduce((sum, x) => sum + x.totalQ, 0);
-const percent = Math.round((totalYes / maxYes) * 100);
-html += ⁠<div class="report-card"> <strong>الزائر: ${v}</strong> | الزيارات: ${vVisits.length} | النسبة: ${percent}% <ul style="font-size:0.9em;">${vVisits.map(x =>⁠<li>{x.teacher} -{x.focusName} ({x.yesCount}/{x.totalQ})</li>⁠).join('')}</ul> </div> ⁠;
-});
+    const output = document.getElementById('reportOutput');
+    if(!DB.visits || DB.visits.length === 0) { output.innerHTML = "<p>لا توجد زيارات مسجلة سحابياً حتى الآن.</p>"; return; }
+    
+    let html = '';
+    
+    if (type === 'visitor') {
+        html += `<h3>التقرير التجميعي حسب الزائر</h3>`;
+        const visitors = [...new Set(DB.visits.map(v => v.visitor))];
+        visitors.forEach(v => {
+            const vVisits = DB.visits.filter(x => x.visitor === v);
+            const totalYes = vVisits.reduce((sum, x) => sum + x.yesCount, 0);
+            const maxYes = vVisits.reduce((sum, x) => sum + x.totalQ, 0);
+            const percent = Math.round((totalYes / maxYes) * 100);
+            html += `
+                <div class="report-card">
+                    <strong>الزائر: ${v}</strong> | الزيارات: ${vVisits.length} | النسبة: ${percent}%
+                    <ul style="font-size:0.9em;">${vVisits.map(x => `<li>${x.teacher} - ${x.focusName} (${x.yesCount}/${x.totalQ})</li>`).join('')}</ul>
+                </div>
+            `;
+        });
+    } else if (type === 'teacher') {
+        html += `<h3>التقرير التجميعي حسب المعلم</h3>`;
+        const teachers = [...new Set(DB.visits.map(v => v.teacher))];
+        teachers.forEach(t => {
+            const tVisits = DB.visits.filter(x => x.teacher === t);
+            const totalYes = tVisits.reduce((sum, x) => sum + x.yesCount, 0);
+            const maxYes = tVisits.reduce((sum, x) => sum + x.totalQ, 0);
+            const percent = Math.round((totalYes / maxYes) * 100);
+            html += `
+                <div class="report-card">
+                    <strong>المعلم: ${t}</strong> | الزيارات: ${tVisits.length} | النسبة: ${percent}%
+                    <ul style="font-size:0.9em;">${tVisits.map(x => `<li>${x.visitor} - ${x.focusName} (${x.yesCount}/${x.totalQ})</li>`).join('')}</ul>
+                </div>
+            `;
+        });
+    } else if (type === 'focus') {
+        html += `<h3>التقرير التجميعي حسب نقطة التركيز</h3>`;
+        const focuses = [...new Set(DB.visits.map(v => v.focusName))];
+        focuses.forEach(f => {
+            const fVisits = DB.visits.filter(x => x.focusName === f);
+            const totalYes = fVisits.reduce((sum, x) => sum + x.yesCount, 0);
+            const maxYes = fVisits.reduce((sum, x) => sum + x.totalQ, 0);
+            const percent = Math.round((totalYes / maxYes) * 100);
+            html += `
+                <div class="report-card">
+                    <strong>نقطة التركيز: ${f}</strong> | الزيارات: ${fVisits.length} | النسبة: ${percent}%
+                    <ul style="font-size:0.9em;">${fVisits.map(x => `<li>${x.visitor} -> ${x.teacher} (${x.yesCount}/${x.totalQ})</li>`).join('')}</ul>
+                </div>
+            `;
+        });
+    } else if (type === 'all') {
+        const totalVisits = DB.visits.length;
+        const totalYes = DB.visits.reduce((sum, x) => sum + x.yesCount, 0);
+        const maxYes = DB.visits.reduce((sum, x) => sum + x.totalQ, 0);
+        const percent = Math.round((totalYes / maxYes) * 100);
+        html += `
+            <div class="summary-box">
+                <h3>التقرير الشامل</h3>
+                إجمالي الزيارات: ${totalVisits} | النسبة العامة للتطبيق: ${percent}%
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse: collapse; text-align:right; font-size:0.9em; min-width:500px;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="padding:8px; border:1px solid #ddd;">التاريخ</th>
+                        <th style="padding:8px; border:1px solid #ddd;">الزائر</th>
+                        <th style="padding:8px; border:1px solid #ddd;">المعلم</th>
+                        <th style="padding:8px; border:1px solid #ddd;">النقطة</th>
+                        <th style="padding:8px; border:1px solid #ddd;">النتيجة</th>
+                    </tr>
+        `;
+        DB.visits.slice().reverse().forEach(v => {
+            html += `
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd;">${v.date}</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${v.visitor}</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${v.teacher}</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${v.focusName}</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${v.yesCount}/${v.totalQ}</td>
+                </tr>
+            `;
+        });
+        html += `</table></div>`;
+    }
+    
+    html += `<div style="text-align:center; margin-top:20px;"><button class="btn btn-success no-print" onclick="window.print()">🖨️ طباعة التقرير</button></div>`;
+    output.innerHTML = html;
 }
-else if (type === 'teacher') {
-html += ⁠<h3>التقرير التجميعي حسب المعلم</h3>⁠;
-const teachers = [...new Set(DB.visits.map(v => v.teacher))];
-teachers.forEach(t => {
-const tVisits = DB.visits.filter(x => x.teacher === t);
-const totalYes = tVisits.reduce((sum, x) => sum + x.yesCount, 0);
-const maxYes = tVisits.reduce((sum, x) => sum + x.totalQ, 0);
-const percent = Math.round((totalYes / maxYes) * 100);
-html += ⁠<div class="report-card"> <strong>المعلم: ${t}</strong> | الزيارات: ${tVisits.length} | النسبة: ${percent}% <ul style="font-size:0.9em;">${tVisits.map(x =>⁠<li>{x.visitor} -{x.focusName} ({x.yesCount}/{x.totalQ})</li>⁠).join('')}</ul> </div> ⁠;
-});
-}
-else if (type === 'focus') {
-html += ⁠<h3>التقرير التجميعي حسب نقطة التركيز</h3>⁠;
-const focuses = [...new Set(DB.visits.map(v => v.focusName))];
-focuses.forEach(f => {
-const fVisits = DB.visits.filter(x => x.focusName === f);
-const totalYes = fVisits.reduce((sum, x) => sum + x.yesCount, 0);
-const maxYes = fVisits.reduce((sum, x) => sum + x.totalQ, 0);
-const percent = Math.round((totalYes / maxYes) * 100);
-html += ⁠<div class="report-card"> <strong>نقطة التركيز: ${f}</strong> | الزيارات: ${fVisits.length} | النسبة: ${percent}% <ul style="font-size:0.9em;">${fVisits.map(x =>⁠<li>{x.visitor} ->{x.teacher} ({x.yesCount}/{x.totalQ})</li>⁠).join('')}</ul> </div> ⁠;
-});
-}
-else if (type === 'all') {
-const totalVisits = DB.visits.length;
-const totalYes = DB.visits.reduce((sum, x) => sum + x.yesCount, 0);
-const maxYes = DB.visits.reduce((sum, x) => sum + x.totalQ, 0);
-const percent = Math.round((totalYes / maxYes) * 100);
-html += ⁠<div class="summary-box"> <h3>التقرير الشامل</h3> إجمالي الزيارات: ${totalVisits} | النسبة العامة للتطبيق: ${percent}% </div> <div style="overflow-x:auto;"> <table style="width:100%; border-collapse: collapse; text-align:right; font-size:0.9em; min-width:500px;"> <tr style="background:#f1f5f9;"> <th style="padding:8px; border:1px solid #ddd;">التاريخ</th> <th style="padding:8px; border:1px solid #ddd;">الزائر</th> <th style="padding:8px; border:1px solid #ddd;">المعلم</th> <th style="padding:8px; border:1px solid #ddd;">النقطة</th> <th style="padding:8px; border:1px solid #ddd;">النتيجة</th> </tr>⁠;
-DB.visits.slice().reverse().forEach(v => {
-html += ⁠<tr> <td style="padding:8px; border:1px solid #ddd;">${v.date}</td> <td style="padding:8px; border:1px solid #ddd;">${v.visitor}</td> <td style="padding:8px; border:1px solid #ddd;">${v.teacher}</td> <td style="padding:8px; border:1px solid #ddd;">${v.focusName}</td> <td style="padding:8px; border:1px solid #ddd;">${v.yesCount}/${v.totalQ}</td> </tr>⁠;
-});
-html += ⁠</table></div>⁠;
-}
-html += ⁠<div style="text-align:center; margin-top:20px;"><button class="btn btn-success no-print" onclick="window.print()">🖨️ طباعة التقرير</button></div>⁠;
-output.innerHTML = html;
-}
+
 document.addEventListener('DOMContentLoaded', () => {
-syncCloudData();
+    syncCloudData();
 });
 </script>
 </body>
