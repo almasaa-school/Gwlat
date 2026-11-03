@@ -46,7 +46,7 @@ body {
 /* Forms & Inputs */
 .form-group { margin-bottom: 15px; }
 .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
-select, input[type="text"], textarea {
+select, input[type="text"], input[type="password"], textarea {
     width: 100%; padding: 12px; border: 1px solid var(--border);
     border-radius: 8px; font-family: inherit; font-size: 16px;
     background-color: #fff; color: #000;
@@ -83,12 +83,25 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
 .ans-no { color: var(--danger); font-weight: bold; }
 .flex-between { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
 @media (min-width: 600px) { .flex-between { flex-direction: row; align-items: center; } }
+
+/* ==========================================
+   إصلاح كود الطباعة 
+   ========================================== */
 @media print {
-    body { background: #fff; padding: 0; }
-    .tabs, .no-print, .btn, .status-badge { display: none !important; }
-    .tab-content { display: block !important; box-shadow: none; padding: 0; }
-    #tab-control, #tab-visit { display: none !important; }
-    #print-area { display: block !important; }
+    @page { margin: 15mm; size: auto; }
+    body { background: #fff; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tabs, .no-print, .btn, .status-badge, .grid-4, #visitForm, #tab-control, .tabs-reports-buttons {
+        display: none !important;
+    }
+    .container { max-width: 100%; margin: 0; padding: 0; }
+    .tab-content { display: none !important; box-shadow: none !important; padding: 0 !important; }
+    .tab-content.active { display: block !important; }
+    .report-card, .question-card, tr { page-break-inside: avoid; }
+    #print-area { display: block !important; margin-top: 0 !important; }
+    #reportOutput { display: block !important; }
+    table { width: 100% !important; border-collapse: collapse !important; }
+    th, td { border: 1px solid #000 !important; padding: 8px !important; }
+    th { background-color: #f3f4f6 !important; }
 }
 </style>
 </head>
@@ -99,13 +112,13 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
     <!-- التبويبات -->
     <div class="tabs no-print">
         <button class="tab-btn active" onclick="switchTab('visit', this)">📝 تسجيل زيارة</button>
-        <button class="tab-btn" onclick="switchTab('control', this)">⚙️ لوحة التحكم</button>
+        <button class="tab-btn" onclick="switchTab('control', this)">⚙️ لوحة الإدارة</button>
         <button class="tab-btn" onclick="switchTab('reports', this)">📊 التقارير</button>
     </div>
 
     <!-- 1. تبويب تسجيل زيارة -->
     <div id="tab-visit" class="tab-content active">
-        <h2 style="margin-top:0; text-align:center;">تسجيل زيارة جديدة</h2>
+        <h2 style="margin-top:0; text-align:center;" class="no-print">تسجيل زيارة جديدة</h2>
         <div class="grid-4 no-print">
             <div class="form-group">
                 <label>الزائر:</label>
@@ -126,6 +139,13 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
         </div>
         <form id="visitForm">
             <div id="questionsContainer"></div>
+            
+            <!-- حقل الملاحظات الإضافية -->
+            <div class="form-group no-print" style="margin-top: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed var(--border);">
+                <label>📝 ملاحظات إضافية (اختياري):</label>
+                <textarea id="visitNotes" rows="3" placeholder="اكتب أي ملاحظات أو توصيات هنا..."></textarea>
+            </div>
+
             <button type="button" class="btn btn-primary btn-block no-print" onclick="saveVisit()">حفظ الزيارة وإصدار التقرير</button>
         </form>
         <div id="print-area" style="display: none; margin-top: 30px;">
@@ -138,52 +158,97 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
         </div>
     </div>
 
-    <!-- 2. تبويب لوحة التحكم -->
+    <!-- 2. تبويب لوحة الإدارة -->
     <div id="tab-control" class="tab-content">
-        <h2 style="margin-top:0;">لوحة التحكم والإعدادات</h2>
-        <div class="panel">
-            <h3>إدارة البيانات الأساسية (القوائم المنسدلة)</h3>
-            <div class="grid-3">
-                <div>
-                    <label>الزوار</label>
-                    <textarea id="visitorsList" rows="5"></textarea>
-                    <button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('visitors')">تحديث الزوار</button>
+        
+        <!-- شاشة تسجيل الدخول للمدير -->
+        <div id="adminLoginPanel">
+            <h2 style="text-align:center;">🔒 دخول مدير النظام</h2>
+            <div class="panel" style="max-width: 400px; margin: 0 auto;">
+                <div class="form-group">
+                    <label>اسم المستخدم:</label>
+                    <input type="text" id="adminUserInput" placeholder="Admin">
                 </div>
-                <div>
-                    <label>المعلمون</label>
-                    <textarea id="teachersList" rows="5"></textarea>
-                    <button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('teachers')">تحديث المعلمين</button>
+                <div class="form-group">
+                    <label>كلمة المرور:</label>
+                    <input type="password" id="adminPassInput" placeholder="Admin">
                 </div>
-                <div>
-                    <label>الصفوف والشعب</label>
-                    <textarea id="classesList" rows="5"></textarea>
-                    <button class="btn btn-sm btn-primary mt-3" style="margin-top:10px; width:100%;" onclick="saveLists('classes')">تحديث الصفوف</button>
-                </div>
+                <button class="btn btn-primary btn-block" onclick="loginAdmin()">دخول</button>
             </div>
-            <small style="color:#64748b; display:block; margin-top:10px;">افصل بين كل عنصر وآخر بسطر جديد.</small>
         </div>
-        <div class="panel">
-            <h3>إدارة نقاط التركيز والأسئلة</h3>
-            <div class="flex-between">
-                <div style="flex:1; width:100%;">
-                    <label>اختر نقطة التركيز لتعديل أسئلتها:</label>
-                    <select id="controlFocusSelect" onchange="loadControlQuestions()"></select>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button class="btn btn-success" onclick="addNewFocusPoint()">+ نقطة تركيز جديدة</button>
-                    <button class="btn btn-danger" onclick="deleteCurrentFocusPoint()">حذف النقطة</button>
+
+        <!-- لوحة التحكم (تظهر بعد تسجيل الدخول) -->
+        <div id="adminDashboard" style="display: none;">
+            <div class="flex-between" style="margin-bottom: 20px;">
+                <h2 style="margin:0;">لوحة التحكم والإعدادات</h2>
+                <button class="btn btn-danger" onclick="logoutAdmin()">تسجيل الخروج</button>
+            </div>
+
+            <!-- إعدادات الحساب -->
+            <div class="panel">
+                <h3>⚙️ إعدادات حساب المدير</h3>
+                <div class="grid-3">
+                    <div>
+                        <label>اسم المستخدم الجديد:</label>
+                        <input type="text" id="newAdminUser">
+                    </div>
+                    <div>
+                        <label>كلمة المرور الجديدة:</label>
+                        <input type="text" id="newAdminPass">
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-success btn-block" onclick="updateAdminCredentials()">تحديث البيانات</button>
+                    </div>
                 </div>
             </div>
-            <div id="controlQuestionsContainer" style="margin-top:20px;"></div>
-            <button class="btn btn-primary mt-3" style="width:100%; margin-top:15px;" onclick="addNewQuestionToFocus()">+ إضافة سؤال جديد</button>
-            <button class="btn btn-success mt-3" style="width:100%; margin-top:10px;" onclick="saveControlSettings()">💾 حفظ جميع التعديلات سحابياً</button>
+
+            <!-- إدارة البيانات الأساسية -->
+            <div class="panel">
+                <h3>إدارة البيانات الأساسية</h3>
+                <div class="grid-3">
+                    <div>
+                        <label>الزوار</label>
+                        <textarea id="visitorsList" rows="5"></textarea>
+                        <button class="btn btn-sm btn-primary btn-block" onclick="saveLists('visitors')">تحديث الزوار</button>
+                    </div>
+                    <div>
+                        <label>المعلمون</label>
+                        <textarea id="teachersList" rows="5"></textarea>
+                        <button class="btn btn-sm btn-primary btn-block" onclick="saveLists('teachers')">تحديث المعلمين</button>
+                    </div>
+                    <div>
+                        <label>الصفوف والشعب</label>
+                        <textarea id="classesList" rows="5"></textarea>
+                        <button class="btn btn-sm btn-primary btn-block" onclick="saveLists('classes')">تحديث الصفوف</button>
+                    </div>
+                </div>
+                <small style="color:#64748b; display:block; margin-top:10px;">افصل بين كل عنصر وآخر بسطر جديد.</small>
+            </div>
+
+            <!-- إدارة نقاط التركيز والأسئلة -->
+            <div class="panel">
+                <h3>إدارة نقاط التركيز والأسئلة</h3>
+                <div class="flex-between">
+                    <div style="flex:1; width:100%;">
+                        <label>اختر نقطة التركيز لتعديل أسئلتها:</label>
+                        <select id="controlFocusSelect" onchange="loadControlQuestions()"></select>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn btn-success" onclick="addNewFocusPoint()">+ نقطة تركيز جديدة</button>
+                        <button class="btn btn-danger" onclick="deleteCurrentFocusPoint()">حذف النقطة</button>
+                    </div>
+                </div>
+                <div id="controlQuestionsContainer" style="margin-top:20px;"></div>
+                <button class="btn btn-primary btn-block" style="margin-top:15px;" onclick="addNewQuestionToFocus()">+ إضافة سؤال جديد</button>
+                <button class="btn btn-success btn-block" style="margin-top:10px;" onclick="saveControlSettings()">💾 حفظ جميع التعديلات سحابياً</button>
+            </div>
         </div>
     </div>
 
     <!-- 3. تبويب التقارير -->
     <div id="tab-reports" class="tab-content">
-        <h2 style="margin-top:0;">التقارير التجميعية السحابية</h2>
-        <div class="grid-4 mb-3">
+        <h2 style="margin-top:0;" class="no-print">التقارير التجميعية السحابية</h2>
+        <div class="grid-4 mb-3 tabs-reports-buttons">
             <button class="btn btn-primary" onclick="generateReport('visitor')">تجميعي حسب الزائر</button>
             <button class="btn btn-primary" onclick="generateReport('teacher')">تجميعي حسب المعلم</button>
             <button class="btn btn-primary" onclick="generateReport('focus')">تجميعي حسب النقطة</button>
@@ -217,6 +282,8 @@ try {
 }
 
 const DEFAULT_DATA = {
+    adminUser: "Admin",
+    adminPass: "Admin",
     visitors: [
         "الدكتور حسن بن علي البلوشي (المدير)",
         "أحمد بن عبدالله العلي (المصمم)",
@@ -274,17 +341,16 @@ const DEFAULT_DATA = {
 let DB = JSON.parse(JSON.stringify(DEFAULT_DATA));
 
 // ==========================================
-// 2. المزامنة السحابية اللحظية
+// 2. المزامنة السحابية
 // ==========================================
 function syncCloudData() {
-    if (!db) {
-        updateStatus("⚠️ تعذر الاتصال بـ Firebase", false);
-        return;
-    }
+    if (!db) return;
     db.collection("app_data").doc("main").onSnapshot((doc) => {
         if (doc.exists) {
             DB = doc.data();
             if (!DB.visits) DB.visits = [];
+            if (!DB.adminUser) DB.adminUser = "Admin";
+            if (!DB.adminPass) DB.adminPass = "Admin";
             updateStatus("🟢 متصل بالسحابة (مُزامن بنجاح)", true);
         } else {
             db.collection("app_data").doc("main").set(DEFAULT_DATA).then(() => {
@@ -293,21 +359,21 @@ function syncCloudData() {
             });
         }
         populateSelects();
-        loadControlPanel();
+        if(sessionStorage.getItem('isAdmin') === 'true') {
+            loadControlPanel();
+            showDashboard();
+        }
     }, (error) => {
-        console.error("Firestore error:", error);
-        updateStatus("❌ خطأ في الاتصال، يرجى الترفيع والتأكد من إعداد القواعد", false);
+        updateStatus("❌ خطأ في الاتصال", false);
     });
 }
 
 function saveToCloud() {
     if (!db) return;
-    updateStatus("⏳ جاري حفظ التعديلات سحابياً...", false);
+    updateStatus("⏳ جاري الحفظ سحابياً...", false);
     db.collection("app_data").doc("main").set(DB).then(() => {
         updateStatus("🟢 تم الحفظ سحابياً بنجاح", true);
-    }).catch((err) => {
-        alert("حدث خطأ أثناء الحفظ سحابياً: " + err.message);
-    });
+    }).catch((err) => alert("حدث خطأ: " + err.message));
 }
 
 function updateStatus(text, isSuccess) {
@@ -317,7 +383,7 @@ function updateStatus(text, isSuccess) {
 }
 
 // ==========================================
-// 3. إدارة التبويبات والواجهة
+// 3. التبويبات والقوائم
 // ==========================================
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -339,12 +405,15 @@ function populateSelects() {
     loadQuestionsForVisit();
 }
 
+// ==========================================
+// 4. تسجيل الزيارة والملاحظات
+// ==========================================
 function loadQuestionsForVisit() {
     const focusId = document.getElementById('focusSelect').value;
     const focusObj = DB.focusPoints.find(f => f.id === focusId);
     const container = document.getElementById('questionsContainer');
     
-    if (!focusObj) { container.innerHTML = "<p>لا توجد أسئلة لهذه النقطة.</p>"; return; }
+    if (!focusObj) { container.innerHTML = "<p>لا توجد أسئلة.</p>"; return; }
     
     container.innerHTML = focusObj.questions.map((q, index) => `
         <div class="question-card">
@@ -365,35 +434,22 @@ function loadQuestionsForVisit() {
     `).join('');
 }
 
-// ✅ الدالة الجديدة للتحكم في إخفاء وإظهار الأسئلة بناءً على السؤال الأول
 function handleFirstQuestion(radio) {
     const isNo = radio.value === 'لا';
-    // تحديد كل بطاقات الأسئلة ما عدا السؤال الأول
     const remainingCards = document.querySelectorAll('.question-card:not(:first-child)');
-
     remainingCards.forEach(card => {
         const radios = card.querySelectorAll('input[type="radio"]');
         const select = card.querySelector('select');
-
         if (isNo) {
-            card.style.display = 'none'; // إخفاء السؤال
-            radios.forEach(r => {
-                r.required = false; // إلغاء شرط الإجابة
-                if (r.value === 'لا') r.checked = true; // اختيار "لا" تلقائياً
-            });
+            card.style.display = 'none';
+            radios.forEach(r => { r.required = false; if (r.value === 'لا') r.checked = true; });
             select.required = false;
-            // اختيار الدليل الأول تلقائياً كقيمة افتراضية
-            if (select.options.length > 1) {
-                select.selectedIndex = 1;
-            }
+            if (select.options.length > 1) select.selectedIndex = 1;
         } else {
-            card.style.display = 'block'; // إظهار السؤال
-            radios.forEach(r => {
-                r.required = true;
-                r.checked = false; // إلغاء التحديد ليعيد الزائر الإجابة
-            });
+            card.style.display = 'block';
+            radios.forEach(r => { r.required = true; r.checked = false; });
             select.required = true;
-            select.selectedIndex = 0; // إعادة القائمة لنص "اختر الدليل"
+            select.selectedIndex = 0;
         }
     });
 }
@@ -421,6 +477,7 @@ function saveVisit() {
         className: document.getElementById('classSelect').value,
         focusName: focusObj.name,
         answers: answers,
+        notes: document.getElementById('visitNotes').value.trim(), // حفظ الملاحظات
         yesCount: yesCount,
         totalQ: focusObj.questions.length
     };
@@ -455,6 +512,16 @@ function showVisitReport(visit) {
             </div>
         `;
     });
+
+    // إضافة الملاحظات في التقرير
+    if (visit.notes) {
+        html += `
+            <div class="report-card" style="background: #fffbeb; border-color: #fcd34d;">
+                <div style="font-weight:bold; margin-bottom:5px; color: #92400e;">📝 ملاحظات إضافية:</div>
+                <div style="white-space: pre-wrap;">${visit.notes}</div>
+            </div>
+        `;
+    }
     
     document.getElementById('visitPrintContent').innerHTML = html;
 }
@@ -464,13 +531,52 @@ function resetVisitForm() {
     document.getElementById('visitForm').style.display = 'block';
     document.querySelector('.grid-4').style.display = 'grid';
     document.getElementById('print-area').style.display = 'none';
-    loadQuestionsForVisit(); // لإعادة تعيين حالة الأسئلة
+    loadQuestionsForVisit();
     window.scrollTo(0, 0);
 }
 
 // ==========================================
-// 4. لوحة التحكم والتقارير
+// 5. لوحة الإدارة (Admin Panel)
 // ==========================================
+function loginAdmin() {
+    const user = document.getElementById('adminUserInput').value;
+    const pass = document.getElementById('adminPassInput').value;
+    
+    if (user === DB.adminUser && pass === DB.adminPass) {
+        sessionStorage.setItem('isAdmin', 'true');
+        document.getElementById('adminUserInput').value = '';
+        document.getElementById('adminPassInput').value = '';
+        showDashboard();
+        loadControlPanel();
+    } else {
+        alert("اسم المستخدم أو كلمة المرور غير صحيحة");
+    }
+}
+
+function logoutAdmin() {
+    sessionStorage.removeItem('isAdmin');
+    document.getElementById('adminLoginPanel').style.display = 'block';
+    document.getElementById('adminDashboard').style.display = 'none';
+}
+
+function showDashboard() {
+    document.getElementById('adminLoginPanel').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'block';
+    document.getElementById('newAdminUser').value = DB.adminUser;
+    document.getElementById('newAdminPass').value = DB.adminPass;
+}
+
+function updateAdminCredentials() {
+    const newUser = document.getElementById('newAdminUser').value;
+    const newPass = document.getElementById('newAdminPass').value;
+    if (!newUser || !newPass) return alert("الرجاء تعبئة الحقول");
+    
+    DB.adminUser = newUser;
+    DB.adminPass = newPass;
+    saveToCloud();
+    alert("تم تحديث بيانات الدخول بنجاح!");
+}
+
 function loadControlPanel() {
     if(!DB) return;
     document.getElementById('visitorsList').value = (DB.visitors || []).join('\n');
@@ -483,6 +589,7 @@ function saveLists(type) {
     const val = document.getElementById(type + 'List').value;
     DB[type] = val.split('\n').map(s => s.trim()).filter(s => s !== '');
     saveToCloud();
+    alert("تم تحديث القائمة!");
 }
 
 function loadControlQuestions() {
@@ -520,8 +627,8 @@ function saveControlSettings() {
             q.evidences = evInput.value.split(',').map(s => s.trim()).filter(s => s);
         }
     });
-    
     saveToCloud();
+    alert("تم حفظ التعديلات!");
 }
 
 function addNewFocusPoint() {
@@ -530,6 +637,10 @@ function addNewFocusPoint() {
     const newId = 'f' + Date.now();
     DB.focusPoints.push({ id: newId, name: name, questions: [] });
     saveToCloud();
+    setTimeout(() => {
+        document.getElementById('controlFocusSelect').value = newId;
+        loadControlQuestions();
+    }, 500);
 }
 
 function deleteCurrentFocusPoint() {
@@ -547,6 +658,7 @@ function addNewQuestionToFocus() {
     const newId = 'q' + Date.now();
     focusObj.questions.push({ id: newId, text: "سؤال جديد (عدله ثم احفظ)", evidences: ["دليل 1", "دليل 2"] });
     saveToCloud();
+    setTimeout(loadControlQuestions, 500);
 }
 
 function deleteControlQuestion(qId) {
@@ -555,11 +667,15 @@ function deleteControlQuestion(qId) {
     const focusObj = DB.focusPoints.find(f => f.id === focusId);
     focusObj.questions = focusObj.questions.filter(q => q.id !== qId);
     saveToCloud();
+    setTimeout(loadControlQuestions, 500);
 }
 
+// ==========================================
+// 6. التقارير
+// ==========================================
 function generateReport(type) {
     const output = document.getElementById('reportOutput');
-    if(!DB.visits || DB.visits.length === 0) { output.innerHTML = "<p>لا توجد زيارات مسجلة سحابياً حتى الآن.</p>"; return; }
+    if(!DB.visits || DB.visits.length === 0) { output.innerHTML = "<p>لا توجد زيارات مسجلة.</p>"; return; }
     
     let html = '';
     
@@ -574,7 +690,9 @@ function generateReport(type) {
             html += `
                 <div class="report-card">
                     <strong>الزائر: ${v}</strong> | الزيارات: ${vVisits.length} | النسبة: ${percent}%
-                    <ul style="font-size:0.9em;">${vVisits.map(x => `<li>${x.teacher} - ${x.focusName} (${x.yesCount}/${x.totalQ})</li>`).join('')}</ul>
+                    <ul style="font-size:0.9em; margin-top: 10px;">
+                        ${vVisits.map(x => `<li style="margin-bottom:8px;">${x.teacher} - ${x.focusName} (${x.yesCount}/${x.totalQ}) ${x.notes ? `<br><span style="color:#b45309; font-size:0.9em;">📝 ملاحظة: ${x.notes}</span>` : ''}</li>`).join('')}
+                    </ul>
                 </div>
             `;
         });
@@ -589,7 +707,9 @@ function generateReport(type) {
             html += `
                 <div class="report-card">
                     <strong>المعلم: ${t}</strong> | الزيارات: ${tVisits.length} | النسبة: ${percent}%
-                    <ul style="font-size:0.9em;">${tVisits.map(x => `<li>${x.visitor} - ${x.focusName} (${x.yesCount}/${x.totalQ})</li>`).join('')}</ul>
+                    <ul style="font-size:0.9em; margin-top: 10px;">
+                        ${tVisits.map(x => `<li style="margin-bottom:8px;">${x.visitor} - ${x.focusName} (${x.yesCount}/${x.totalQ}) ${x.notes ? `<br><span style="color:#b45309; font-size:0.9em;">📝 ملاحظة: ${x.notes}</span>` : ''}</li>`).join('')}
+                    </ul>
                 </div>
             `;
         });
@@ -604,7 +724,9 @@ function generateReport(type) {
             html += `
                 <div class="report-card">
                     <strong>نقطة التركيز: ${f}</strong> | الزيارات: ${fVisits.length} | النسبة: ${percent}%
-                    <ul style="font-size:0.9em;">${fVisits.map(x => `<li>${x.visitor} -> ${x.teacher} (${x.yesCount}/${x.totalQ})</li>`).join('')}</ul>
+                    <ul style="font-size:0.9em; margin-top: 10px;">
+                        ${fVisits.map(x => `<li style="margin-bottom:8px;">${x.visitor} -> ${x.teacher} (${x.yesCount}/${x.totalQ}) ${x.notes ? `<br><span style="color:#b45309; font-size:0.9em;">📝 ملاحظة: ${x.notes}</span>` : ''}</li>`).join('')}
+                    </ul>
                 </div>
             `;
         });
@@ -626,6 +748,7 @@ function generateReport(type) {
                         <th style="padding:8px; border:1px solid #ddd;">المعلم</th>
                         <th style="padding:8px; border:1px solid #ddd;">النقطة</th>
                         <th style="padding:8px; border:1px solid #ddd;">النتيجة</th>
+                        <th style="padding:8px; border:1px solid #ddd;">الملاحظات</th>
                     </tr>
         `;
         DB.visits.slice().reverse().forEach(v => {
@@ -636,6 +759,7 @@ function generateReport(type) {
                     <td style="padding:8px; border:1px solid #ddd;">${v.teacher}</td>
                     <td style="padding:8px; border:1px solid #ddd;">${v.focusName}</td>
                     <td style="padding:8px; border:1px solid #ddd;">${v.yesCount}/${v.totalQ}</td>
+                    <td style="padding:8px; border:1px solid #ddd; max-width: 200px; white-space: normal;">${v.notes || '-'}</td>
                 </tr>
             `;
         });
