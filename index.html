@@ -198,16 +198,12 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script>
 // ==========================================
-// 1. إعدادات Firebase (يجب استبدالها بإعداداتك الكاملة)
+// 1. إعدادات Firebase
 // ==========================================
 const firebaseConfig = {
-    // ⚠️ تنبيه: يجب إضافة apiKey و appId من لوحة تحكم Firebase
     projectId: "ahmed-d654f",
     authDomain: "ahmed-d654f.firebaseapp.com",
     storageBucket: "ahmed-d654f.appspot.com",
-    // apiKey: "ضع_المفتاح_هنا",
-    // messagingSenderId: "ضع_الرقم_هنا",
-    // appId: "ضع_المعرف_هنا"
 };
 
 let db;
@@ -354,8 +350,12 @@ function loadQuestionsForVisit() {
         <div class="question-card">
             <div class="question-text">${index + 1}. ${q.text}</div>
             <div class="options-group">
-                <label class="radio-label"><input type="radio" name="ans_${q.id}" value="نعم" required> نعم</label>
-                <label class="radio-label"><input type="radio" name="ans_${q.id}" value="لا" required> لا</label>
+                <label class="radio-label">
+                    <input type="radio" name="ans_${q.id}" value="نعم" required ${index === 0 ? `onchange="handleFirstQuestion(this)"` : ''}> نعم
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="ans_${q.id}" value="لا" required ${index === 0 ? `onchange="handleFirstQuestion(this)"` : ''}> لا
+                </label>
             </div>
             <select id="ev_${q.id}" required>
                 <option value="" disabled selected>-- اختر الدليل --</option>
@@ -363,6 +363,39 @@ function loadQuestionsForVisit() {
             </select>
         </div>
     `).join('');
+}
+
+// ✅ الدالة الجديدة للتحكم في إخفاء وإظهار الأسئلة بناءً على السؤال الأول
+function handleFirstQuestion(radio) {
+    const isNo = radio.value === 'لا';
+    // تحديد كل بطاقات الأسئلة ما عدا السؤال الأول
+    const remainingCards = document.querySelectorAll('.question-card:not(:first-child)');
+
+    remainingCards.forEach(card => {
+        const radios = card.querySelectorAll('input[type="radio"]');
+        const select = card.querySelector('select');
+
+        if (isNo) {
+            card.style.display = 'none'; // إخفاء السؤال
+            radios.forEach(r => {
+                r.required = false; // إلغاء شرط الإجابة
+                if (r.value === 'لا') r.checked = true; // اختيار "لا" تلقائياً
+            });
+            select.required = false;
+            // اختيار الدليل الأول تلقائياً كقيمة افتراضية
+            if (select.options.length > 1) {
+                select.selectedIndex = 1;
+            }
+        } else {
+            card.style.display = 'block'; // إظهار السؤال
+            radios.forEach(r => {
+                r.required = true;
+                r.checked = false; // إلغاء التحديد ليعيد الزائر الإجابة
+            });
+            select.required = true;
+            select.selectedIndex = 0; // إعادة القائمة لنص "اختر الدليل"
+        }
+    });
 }
 
 function saveVisit() {
@@ -431,6 +464,7 @@ function resetVisitForm() {
     document.getElementById('visitForm').style.display = 'block';
     document.querySelector('.grid-4').style.display = 'grid';
     document.getElementById('print-area').style.display = 'none';
+    loadQuestionsForVisit(); // لإعادة تعيين حالة الأسئلة
     window.scrollTo(0, 0);
 }
 
