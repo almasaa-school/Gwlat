@@ -94,23 +94,69 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
 .ai-list li { margin-bottom: 10px; }
 
 /* ==========================================
-   إصلاح كود الطباعة 
+   إصلاح كود الطباعة الشامل 
    ========================================== */
 @media print {
-    @page { margin: 15mm; size: auto; }
-    body { background: #fff; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .tabs, .no-print, .btn, .status-badge, .grid-4, #visitForm, #tab-control, .tabs-reports-buttons {
-        display: none !important;
+    @page { margin: 10mm; size: auto; }
+    
+    /* إخفاء كل شيء في الصفحة افتراضياً */
+    body * { visibility: hidden; }
+    
+    /* إظهار مناطق الطباعة فقط (تقرير الزيارة والتقارير التحليلية) */
+    #print-area, #print-area *,
+    #reportOutput, #reportOutput * { visibility: visible; }
+    
+    /* تثبيت التقرير في أعلى الصفحة لضمان عدم قطعه */
+    #print-area, #reportOutput {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
     }
-    .container { max-width: 100%; margin: 0; padding: 0; }
-    .tab-content { display: none !important; box-shadow: none !important; padding: 0 !important; }
-    .tab-content.active { display: block !important; }
-    .report-card, .question-card, tr, .ai-report-container { page-break-inside: avoid; }
-    #print-area { display: block !important; margin-top: 0 !important; }
-    #reportOutput { display: block !important; }
+
+    /* إخفاء الأزرار وعناصر التحكم داخل التقرير */
+    .no-print, .btn, .tabs, .status-badge { display: none !important; }
+    
+    /* ضبط الألوان والخطوط لتكون واضحة جداً على الورق */
+    html, body { 
+        background: #fff !important; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+    }
+    
+    .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    
+    .summary-box { 
+        background: #f3f4f6 !important; 
+        color: #000 !important; 
+        border: 1px solid #000 !important; 
+    }
+    
+    .report-card { 
+        border: 1px solid #000 !important; 
+        page-break-inside: avoid; 
+        margin-bottom: 10px; 
+    }
+    
+    /* تحسين شكل التقرير التحليلي الذكي */
+    .ai-report-container { 
+        border: none !important; 
+        box-shadow: none !important; 
+        padding: 0 !important; 
+    }
+    
+    .ai-section h4 { 
+        color: #000 !important; 
+        border-bottom: 1px solid #000 !important; 
+    }
+    
+    /* منع قطع الجداول */
     table { width: 100% !important; border-collapse: collapse !important; }
-    th, td { border: 1px solid #000 !important; padding: 8px !important; }
-    th { background-color: #f3f4f6 !important; }
+    th, td { border: 1px solid #000 !important; padding: 6px !important; }
+    th { background-color: #e5e7eb !important; }
+    tr { page-break-inside: avoid; }
 }
 </style>
 </head>
