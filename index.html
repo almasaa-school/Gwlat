@@ -84,6 +84,15 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
 .flex-between { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
 @media (min-width: 600px) { .flex-between { flex-direction: row; align-items: center; } }
 
+/* AI Report Style */
+.ai-report-container { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+.ai-header { text-align: center; border-bottom: 2px solid var(--secondary); padding-bottom: 15px; margin-bottom: 20px; }
+.ai-section { margin-bottom: 20px; }
+.ai-section h4 { color: var(--secondary); margin-bottom: 10px; font-size: 1.1em; display: flex; align-items: center; gap: 8px;}
+.ai-section p { margin: 0; text-align: justify; }
+.ai-list { padding-right: 20px; margin: 0; }
+.ai-list li { margin-bottom: 10px; }
+
 /* ==========================================
    إصلاح كود الطباعة 
    ========================================== */
@@ -96,7 +105,7 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
     .container { max-width: 100%; margin: 0; padding: 0; }
     .tab-content { display: none !important; box-shadow: none !important; padding: 0 !important; }
     .tab-content.active { display: block !important; }
-    .report-card, .question-card, tr { page-break-inside: avoid; }
+    .report-card, .question-card, tr, .ai-report-container { page-break-inside: avoid; }
     #print-area { display: block !important; margin-top: 0 !important; }
     #reportOutput { display: block !important; }
     table { width: 100% !important; border-collapse: collapse !important; }
@@ -140,7 +149,6 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
         <form id="visitForm">
             <div id="questionsContainer"></div>
             
-            <!-- حقل الملاحظات الإضافية -->
             <div class="form-group no-print" style="margin-top: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed var(--border);">
                 <label>📝 ملاحظات إضافية (اختياري):</label>
                 <textarea id="visitNotes" rows="3" placeholder="اكتب أي ملاحظات أو توصيات هنا..."></textarea>
@@ -160,8 +168,6 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
 
     <!-- 2. تبويب لوحة الإدارة -->
     <div id="tab-control" class="tab-content">
-        
-        <!-- شاشة تسجيل الدخول للمدير -->
         <div id="adminLoginPanel">
             <h2 style="text-align:center;">🔒 دخول مدير النظام</h2>
             <div class="panel" style="max-width: 400px; margin: 0 auto;">
@@ -177,14 +183,12 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
             </div>
         </div>
 
-        <!-- لوحة التحكم (تظهر بعد تسجيل الدخول) -->
         <div id="adminDashboard" style="display: none;">
             <div class="flex-between" style="margin-bottom: 20px;">
                 <h2 style="margin:0;">لوحة التحكم والإعدادات</h2>
                 <button class="btn btn-danger" onclick="logoutAdmin()">تسجيل الخروج</button>
             </div>
 
-            <!-- إعدادات الحساب -->
             <div class="panel">
                 <h3>⚙️ إعدادات حساب المدير</h3>
                 <div class="grid-3">
@@ -202,7 +206,6 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
                 </div>
             </div>
 
-            <!-- إدارة البيانات الأساسية -->
             <div class="panel">
                 <h3>إدارة البيانات الأساسية</h3>
                 <div class="grid-3">
@@ -225,7 +228,6 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
                 <small style="color:#64748b; display:block; margin-top:10px;">افصل بين كل عنصر وآخر بسطر جديد.</small>
             </div>
 
-            <!-- إدارة نقاط التركيز والأسئلة -->
             <div class="panel">
                 <h3>إدارة نقاط التركيز والأسئلة</h3>
                 <div class="flex-between">
@@ -247,13 +249,25 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--secondary);
 
     <!-- 3. تبويب التقارير -->
     <div id="tab-reports" class="tab-content">
-        <h2 style="margin-top:0;" class="no-print">التقارير التجميعية السحابية</h2>
-        <div class="grid-4 mb-3 tabs-reports-buttons">
+        <h2 style="margin-top:0;" class="no-print">التقارير التجميعية والتحليلية</h2>
+        
+        <div class="grid-4 mb-3 tabs-reports-buttons no-print">
             <button class="btn btn-primary" onclick="generateReport('visitor')">تجميعي حسب الزائر</button>
             <button class="btn btn-primary" onclick="generateReport('teacher')">تجميعي حسب المعلم</button>
             <button class="btn btn-primary" onclick="generateReport('focus')">تجميعي حسب النقطة</button>
             <button class="btn btn-success" onclick="generateReport('all')">تقرير شامل</button>
         </div>
+
+        <!-- قسم التقرير التحليلي الذكي -->
+        <div class="panel no-print" style="background: #f0fdf4; border-color: #bbf7d0;">
+            <h3 style="color: #166534; border-bottom-color: #bbf7d0;">🧠 التقرير التحليلي الذكي (الوصفي)</h3>
+            <p style="font-size: 0.9em; color: #166534;">يقوم النظام بتحليل جميع الزيارات لنقطة تركيز محددة وصياغة تقرير وصفي يوضح نقاط القوة والضعف والتوصيات.</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <select id="aiFocusSelect" style="flex: 1; min-width: 200px;"></select>
+                <button class="btn btn-success" onclick="generateAIReport()">✨ توليد التقرير التحليلي</button>
+            </div>
+        </div>
+
         <div id="reportOutput" style="margin-top:20px;"></div>
     </div>
 </div>
@@ -277,19 +291,12 @@ try {
     db = firebase.firestore();
 } catch (e) {
     console.error("Firebase Initialization Error:", e);
-    document.getElementById('connectionStatus').innerText = "❌ إعدادات Firebase غير مكتملة";
-    document.getElementById('connectionStatus').className = "status-badge status-error";
 }
 
 const DEFAULT_DATA = {
     adminUser: "Admin",
     adminPass: "Admin",
-    visitors: [
-        "الدكتور حسن بن علي البلوشي (المدير)",
-        "أحمد بن عبدالله العلي (المصمم)",
-        "المشرف التربوي الأول",
-        "المشرف التربوي الثاني"
-    ],
+    visitors: ["الدكتور حسن بن علي البلوشي (المدير)", "أحمد بن عبدالله العلي (المصمم)", "المشرف التربوي الأول", "المشرف التربوي الثاني"],
     teachers: [
         "عادل ناعم راشد الشيدى", "ماجد سعيد هلال الحوسنى", "بدر سيف خميس الغافرى", "فريد سيف حمد المقبالى",
         "ابراهيم مصبح كوهيه السعدى", "ناصر محمد على الغدانى", "محمد سالم على البلوشى", "هلال عامر هلال الجهورى",
@@ -311,10 +318,8 @@ const DEFAULT_DATA = {
         "اميل منير صبحى سيدهم", "مروان محمد العادل بلعج"
     ],
     classes: [
-        "5/1", "5/2", "5/3", "5/4", "5/5", "5/6", "5/7",
-        "6/1", "6/2", "6/3", "6/4", "6/5", "6/6",
-        "7/1", "7/2", "7/3", "7/4", "7/5", "7/6", "7/7",
-        "8/1", "8/2", "8/3", "8/4", "8/5", "8/6",
+        "5/1", "5/2", "5/3", "5/4", "5/5", "5/6", "5/7", "6/1", "6/2", "6/3", "6/4", "6/5", "6/6",
+        "7/1", "7/2", "7/3", "7/4", "7/5", "7/6", "7/7", "8/1", "8/2", "8/3", "8/4", "8/5", "8/6",
         "9/1", "9/2", "9/3", "9/4", "9/5", "9/6"
     ],
     focusPoints: [
@@ -359,6 +364,7 @@ function syncCloudData() {
             });
         }
         populateSelects();
+        populateAISelect();
         if(sessionStorage.getItem('isAdmin') === 'true') {
             loadControlPanel();
             showDashboard();
@@ -405,8 +411,15 @@ function populateSelects() {
     loadQuestionsForVisit();
 }
 
+function populateAISelect() {
+    const aiSelect = document.getElementById('aiFocusSelect');
+    if(aiSelect) {
+        aiSelect.innerHTML = DB.focusPoints.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+    }
+}
+
 // ==========================================
-// 4. تسجيل الزيارة والملاحظات
+// 4. تسجيل الزيارة
 // ==========================================
 function loadQuestionsForVisit() {
     const focusId = document.getElementById('focusSelect').value;
@@ -464,7 +477,7 @@ function saveVisit() {
     const answers = focusObj.questions.map(q => {
         const ans = document.querySelector(`input[name="ans_${q.id}"]:checked`).value;
         const evidence = document.getElementById(`ev_${q.id}`).value;
-        return { qText: q.text, answer: ans, evidence: evidence };
+        return { qId: q.id, qText: q.text, answer: ans, evidence: evidence };
     });
     
     const yesCount = answers.filter(a => a.answer === 'نعم').length;
@@ -477,7 +490,7 @@ function saveVisit() {
         className: document.getElementById('classSelect').value,
         focusName: focusObj.name,
         answers: answers,
-        notes: document.getElementById('visitNotes').value.trim(), // حفظ الملاحظات
+        notes: document.getElementById('visitNotes').value.trim(),
         yesCount: yesCount,
         totalQ: focusObj.questions.length
     };
@@ -513,7 +526,6 @@ function showVisitReport(visit) {
         `;
     });
 
-    // إضافة الملاحظات في التقرير
     if (visit.notes) {
         html += `
             <div class="report-card" style="background: #fffbeb; border-color: #fcd34d;">
@@ -536,7 +548,7 @@ function resetVisitForm() {
 }
 
 // ==========================================
-// 5. لوحة الإدارة (Admin Panel)
+// 5. لوحة الإدارة
 // ==========================================
 function loginAdmin() {
     const user = document.getElementById('adminUserInput').value;
@@ -570,7 +582,6 @@ function updateAdminCredentials() {
     const newUser = document.getElementById('newAdminUser').value;
     const newPass = document.getElementById('newAdminPass').value;
     if (!newUser || !newPass) return alert("الرجاء تعبئة الحقول");
-    
     DB.adminUser = newUser;
     DB.adminPass = newPass;
     saveToCloud();
@@ -671,7 +682,7 @@ function deleteControlQuestion(qId) {
 }
 
 // ==========================================
-// 6. التقارير
+// 6. التقارير العادية
 // ==========================================
 function generateReport(type) {
     const output = document.getElementById('reportOutput');
@@ -767,6 +778,126 @@ function generateReport(type) {
     }
     
     html += `<div style="text-align:center; margin-top:20px;"><button class="btn btn-success no-print" onclick="window.print()">🖨️ طباعة التقرير</button></div>`;
+    output.innerHTML = html;
+}
+
+// ==========================================
+// 7. التقرير التحليلي الذكي (AI Logic)
+// ==========================================
+function generateAIReport() {
+    const focusName = document.getElementById('aiFocusSelect').value;
+    const output = document.getElementById('reportOutput');
+    
+    // جلب الزيارات الخاصة بنقطة التركيز المحددة
+    const focusVisits = DB.visits.filter(v => v.focusName === focusName);
+    
+    if (focusVisits.length === 0) {
+        output.innerHTML = `<div class="summary-box" style="background:#fee2e2; color:#991b1b; border-color:#fca5a5;">لا توجد زيارات مسجلة لهذه النقطة حتى الآن لتوليد تقرير تحليلي.</div>`;
+        return;
+    }
+
+    // 1. حساب الإحصائيات العامة
+    const totalVisits = focusVisits.length;
+    const totalYes = focusVisits.reduce((sum, v) => sum + v.yesCount, 0);
+    const maxPossible = focusVisits.reduce((sum, v) => sum + v.totalQ, 0);
+    const overallPercent = Math.round((totalYes / maxPossible) * 100);
+
+    // 2. تحليل الأسئلة (جمع الإجابات والأدلة لكل سؤال)
+    const questionStats = {};
+    focusVisits.forEach(visit => {
+        visit.answers.forEach(ans => {
+            if (!questionStats[ans.qText]) {
+                questionStats[ans.qText] = { yes: 0, no: 0, evidences: {} };
+            }
+            if (ans.answer === 'نعم') {
+                questionStats[ans.qText].yes++;
+            } else {
+                questionStats[ans.qText].no++;
+                // تتبع الأدلة فقط عند الإجابة بـ "لا"
+                questionStats[ans.qText].evidences[ans.evidence] = (questionStats[ans.qText].evidences[ans.evidence] || 0) + 1;
+            }
+        });
+    });
+
+    // ترتيب الأسئلة حسب نسبة "نعم" (للعثور على الأقوى والأضعف)
+    const sortedQuestions = Object.keys(questionStats).map(qText => {
+        const stat = questionStats[qText];
+        const total = stat.yes + stat.no;
+        const percent = total > 0 ? Math.round((stat.yes / total) * 100) : 0;
+        
+        // استخراج الدليل الأكثر تكراراً للسلبيات
+        let topEvidence = '';
+        let maxEvCount = 0;
+        for (const [ev, count] of Object.entries(stat.evidences)) {
+            if (count > maxEvCount) { maxEvCount = count; topEvidence = ev; }
+        }
+
+        return { text: qText, percent, yes: stat.yes, no: stat.no, total, topEvidence };
+    }).sort((a, b) => b.percent - a.percent);
+
+    // 3. صياغة النص الوصفي
+    const strengths = sortedQuestions.slice(0, 3).filter(q => q.percent >= 60); // أقوى 3 جوانب
+    const weaknesses = sortedQuestions.slice(-3).filter(q => q.percent < 70).reverse(); // أضعف 3 جوانب
+
+    // بناء التقرير HTML
+    let html = `
+        <div class="ai-report-container">
+            <div class="ai-header">
+                <h2 style="margin:0; color:var(--primary);">التقرير التحليلي الوصفي</h2>
+                <h3 style="margin:5px 0; color:var(--secondary);">${focusName}</h3>
+                <p style="margin:5px 0; color:#64748b;">عدد الزيارات المشمولة: ${totalVisits} زيارة</p>
+            </div>
+
+            <div class="ai-section">
+                <h4>📊 الملخص التنفيذي</h4>
+                <p>بناءً على تحليل <strong>${totalVisits}</strong> زيارة صفية، بلغت النسبة العامة لتطبيق هذه النقطة <strong>${overallPercent}%</strong>. ${overallPercent >= 80 ? 'مما يعكس التزاماً عالياً وتطبيقاً ممتازاً في هذا الجانب.' : overallPercent >= 50 ? 'مما يعكس وجود تطبيق متوسط يحتاج إلى بعض الدعم والتوجيه.' : 'مما يشير إلى وجود فجوة كبيرة في التطبيق تستدعي تدخلاً عاجلاً وخطة تطويرية.'}</p>
+            </div>
+
+            <div class="ai-section">
+                <h4>✅ نقاط القوة (الجوانب الأكثر تطبيقاً)</h4>
+                ${strengths.length > 0 ? `
+                    <ul class="ai-list">
+                        ${strengths.map(s => `<li><strong>${s.text}</strong>: تم تطبيقه في ${s.percent}% من الزيارات (${s.yes} من ${s.total}).</li>`).join('')}
+                    </ul>
+                ` : '<p>لم يتم رصد جوانب قوة واضحة (نسبة التطبيق منخفضة في جميع الجوانب).</p>'}
+            </div>
+
+            <div class="ai-section">
+                <h4>⚠️ الجوانب التي تحتاج إلى تطوير (نقاط الضعف)</h4>
+                ${weaknesses.length > 0 ? `
+                    <ul class="ai-list">
+                        ${weaknesses.map(w => `
+                            <li>
+                                <strong>${w.text}</strong>: تم تطبيقه في ${w.percent}% فقط من الزيارات (${w.yes} من ${w.total}). 
+                                ${w.topEvidence ? `<br><span style="color:#b45309; font-size:0.9em;">🔍 الدليل الأكثر تكراراً لعدم التطبيق: <strong>${w.topEvidence}</strong></span>` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                ` : '<p>لا توجد جوانب ضعف جوهرية، التطبيق ممتاز بشكل عام.</p>'}
+            </div>
+
+            <div class="ai-section" style="background: #f8fafc; padding: 15px; border-radius: 8px; border-right: 4px solid var(--success);">
+                <h4 style="color: var(--success);">💡 التوصيات المقترحة</h4>
+                <ul class="ai-list">
+                    ${weaknesses.length > 0 ? weaknesses.map(w => {
+                        let rec = `العمل على تحسين مهارة (${w.text.split('؟')[0]}).`;
+                        if (w.topEvidence.includes('فوضوي') || w.topEvidence.includes('لم يتم')) {
+                            rec += ` يُوصى بتقديم ورشة عمل للمعلمين حول كيفية التنظيم الفعال.`;
+                        } else if (w.topEvidence.includes('طالب واحد') || w.topEvidence.includes('متفرجون')) {
+                            rec += ` يُوصى بالتركيز على استراتيجيات ضمان المسؤولية الفردية داخل المجموعات.`;
+                        } else {
+                            rec += ` يُوصى بتعزيز هذا الجانب عبر زيارات إشرافية موجهة أو تبادل خبرات.`;
+                        }
+                        return `<li>${rec}</li>`;
+                    }).join('') : '<li>الاستمرار في دعم المعلمين والحفاظ على هذا المستوى المتميز.</li>'}
+                </ul>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:20px;" class="no-print">
+            <button class="btn btn-success" onclick="window.print()">🖨️ طباعة التقرير الوصفي</button>
+        </div>
+    `;
+
     output.innerHTML = html;
 }
 
